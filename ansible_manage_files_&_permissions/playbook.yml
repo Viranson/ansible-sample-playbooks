@@ -1,0 +1,60 @@
+---
+- name: "Manage Files and Permissions on Servers"
+  hosts: prod
+  become: true
+  vars_files:
+    - files/secrets/credentials.yml
+
+  tasks:
+    - name: "Create empty files setup.conf"
+      file:
+        path: /opt/devops/setup.conf
+        state: touch
+      when: inventory_hostname == "srv1"
+
+    - name: "Set acl properties for setup.conf"
+      acl:
+        path: /opt/devops/setup.conf
+        entity:  tony
+        etype:  group
+        permissions: r
+        state: present
+      when: inventory_hostname == "srv1"
+
+    - name: "Create empty files data-stream.txt"
+      file:
+        path: /opt/devops/data-stream.txt
+        state: touch
+      when: inventory_hostname == "srv1"
+
+    - name: "Set acl properties for data-stream.txt"
+      acl:
+        path: /opt/devops/setup.conf
+        entity:  datagild
+        etype:  group
+        permissions: rw
+        state: present
+      when: inventory_hostname == "srv1"
+
+    - name: "Create empty files api-access.log"
+      file:
+        path: /opt/api/api-access.log
+        state: touch
+      when: inventory_hostname == "srv2"
+
+    - name: "Set acl properties for api-access.log"
+      acl:
+        path: /opt/api/api-access.log
+        entity:  app-data
+        etype:  user
+        permissions: rw
+        state: present
+      when: inventory_hostname == "srv2"
+
+    - name: "Extract archive and set Permissions"
+      unarchive:
+        src: /data/appdata.zip
+        dest: /opt/data
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0655"
