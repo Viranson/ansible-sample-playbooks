@@ -1,6 +1,4 @@
-# ansible-sample-playbooks
-
-Samples Ansible Playbooks
+# Samples Ansible Playbooks
 -------------------------
 
 This repository contains some samples Ansible Playbooks.
