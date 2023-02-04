@@ -1,0 +1,16 @@
+---
+- name: "Deploy MariaDB and configure databases"
+  hosts: dbserver
+  become: true
+  vars_files:
+    - files/secrets/credentials.yml
+  roles:
+   - db
+
+- name: "Deploy Nginx, PHP and host webapp|website files"
+  hosts: webserver
+  become: true
+  vars_files:
+    - files/secrets/credentials.yml
+  roles:
+   - web

@@ -1,0 +1,100 @@
+---
+- name: "Install nginx, php & git packages"
+  yum:
+    name: ['nginx', 'php', 'php-mysql', 'php-fpm', 'php-opcache', 'php-gd', 'php-xml', 'php-mbstring', 'git']
+    state: present
+
+- name: "Start services"
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - nginx
+    - firewalld
+    - php-fpm
+
+- name: "Setup Nginx server"
+  copy:
+    src: files/nginx/default.conf
+    dest: /etc/nginx/sites-available/default
+
+- name: "Start Nginx & Enable service"
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: "Start firewalld"
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: "Enable/Open http/https firewall ports"
+  firewalld:
+    zone: public
+    service: '{{ item }}'
+    immediate: true
+    permanent: yes
+    state: enabled
+  loop:
+  - http
+  - https
+  notify: restart firewalld
+
+- name: "Configure SELinux to allow nginx to connect to remote database"
+  seboolean:
+    name: "httpd_can_network_connect_db"
+    state: true
+    persistent: yes
+
+- name: "Make nginx user owner of web directory"
+  file:
+    path: /var/www/html/ #/usr/share/nginx/html
+    recurse: yes
+    owner: nginx
+    group: nginx
+
+- name: "Change php user to nginx user"
+  lineinfile:
+    path: /etc/php-fpm.d/www.conf
+    regexp: '^{{ item.apache }}'
+    line: '{{ item.nginx }}'
+  with_items:
+    - user:
+        apache: "user ="
+        nginx: "user = nginx"
+    - group:
+        apache: "group ="
+        nginx: "group = nginx"
+  notify: restart php
+
+- name: "listen on unix socket not tcp/ip"
+  lineinfile:
+    path: /etc/php-fpm.d/www.conf
+    regexp: "listen ="
+    line: "listen = /run/php-fpm/www.sock"
+    state: present
+  notify: restart php
+
+- name: "Delete default index.html if exists"
+  file:
+    path: /var/www/html/index.html
+    state: absent
+
+- name: "Retreive webapp/website files from repository"
+  git:
+    repo: "{{ repository }}"
+    dest: "/var/www/html/"
+    force: yes
+
+- name: "Creates PHP test page"
+  template:
+    src: templates/index.php.j2
+    dest: /var/www/html/index.php
+    owner: nginx
+    group: nginx
+  notify:
+    - restart nginx
+    - restart php

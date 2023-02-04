@@ -1,0 +1,15 @@
+---
+- name: "Restart firewalld"
+  service:
+    name: firewalld
+    state: restarted
+
+- name: "Restart nginx"
+  service:
+    name: nginx
+    state: restarted
+
+- name: "Restart php"
+  service:
+    name: php-fpm
+    state: restarted

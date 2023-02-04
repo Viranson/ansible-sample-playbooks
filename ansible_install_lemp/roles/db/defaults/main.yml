@@ -1,0 +1,5 @@
+---
+# webserver host variables
+mysqlservice: mariadb
+mysql_port: 3306
+dbuser: webapp
