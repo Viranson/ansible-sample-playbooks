@@ -14,11 +14,11 @@
 - name: "Install .my.cnf with credentials"
   template:
     src: templates/my.cnf.j2
-    dest: /etc/my.cnf
+    dest: /root/.my.cnf
     mode: 0400
     owner: root
     group: root
-  notify: "restart ${{ mysqlservice }}"
+  notify: "restart {{ mysqlservice }}"
   tags: my_cnf
 
 - name: "Create MariaDB log file"
@@ -43,13 +43,6 @@
     state: started
     enabled: yes
 
-- name: "Deletes anonymous MySQL server user for localhost"
-  mysql_user:
-    user: ""
-    state: "absent"
-    login_user: root
-    login_password: "{{ mysql_root_pass }}"
-
 - name: "Secures MariaDB root user"
   mysql_user:
     user: "root"
@@ -62,6 +55,13 @@
     - localhost
     - ::1
     - "{{ ansible_fqdn }}"
+
+- name: "Deletes anonymous MySQL server user for localhost"
+  mysql_user:
+    user: ""
+    state: "absent"
+    login_user: root
+    login_password: "{{ mysql_root_pass }}"
 
 - name: "Removes the MySQL test database"
   mysql_db:
@@ -82,7 +82,7 @@
 
 - name: "Enable MySQL firewall port"
   firewalld:
-    port: "${{ mysql_port }}/tcp"
+    port: "{{ mysql_port }}/tcp"
     permanent: true
     state: enabled
     immediate: yes
