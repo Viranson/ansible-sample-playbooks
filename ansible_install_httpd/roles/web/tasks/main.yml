@@ -1,0 +1,70 @@
+---
+- name: "Install httpd & php packages"
+  yum:
+    name: ['httpd', 'php', 'php-mysql', 'php-fpm', 'php-opcache', 'php-gd', 'php-xml', 'php-mbstring', 'git']
+    state: latest
+  when: ansible_os_family == "RedHat"
+
+- name: "Create the new DocumentRoot directory if not exist"
+  file:
+    path: "/var/www/html/webapp"
+    state: directory
+    owner: apache
+    group: apache
+
+- name: "Replace default DocumentRoot in httpd.conf file"
+  replace:
+    path: "/etc/httpd/conf/httpd.conf"
+    regexp: DocumentRoot \"\/var\/www\/html\"
+    replace: DocumentRoot "/var/www/html/webapp"
+
+- name: "Generate PHP test page from template"
+  template:
+    src: templates/index.php.j2
+    dest: /var/www/html/webapp/index.php
+    owner: apache
+    group: apache
+
+- name: "Delete default index.html if exists"
+  file:
+    path: /var/www/html/index.html
+    state: absent
+
+- name: "Start and enable httpd service"
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+
+# - name: "Start firewalld"
+#   service:
+#     name: firewalld
+#     state: started
+#     enabled: yes
+
+# - name: "Enable/Open http/https firewall ports"
+#   firewalld:
+#     zone: public
+#     service: '{{ item }}'
+#     immediate: true
+#     permanent: yes
+#     state: enabled
+#   loop:
+#   - http
+#   - https
+#   notify: restart firewalld
+
+# - name: "Configure SELinux to allow nginx to connect to remote database"
+#   seboolean:
+#     name: "httpd_can_network_connect_db"
+#     state: true
+#     persistent: yes
+
+
+# - name: "listen on unix socket not tcp/ip"
+#   lineinfile:
+#     path: /etc/php-fpm.d/www.conf
+#     regexp: "listen ="
+#     line: "listen = /run/php-fpm/www.sock"
+#     state: present
+#   notify: restart php

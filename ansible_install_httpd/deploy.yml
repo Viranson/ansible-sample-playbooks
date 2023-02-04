@@ -1,0 +1,8 @@
+---
+- name: "Install Apache and host web files"
+  hosts: webserver
+  become: true
+  vars_files:
+    - files/secrets/credentials.yml
+  roles:
+   - web
